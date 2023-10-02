@@ -35,6 +35,11 @@ document.addEventListener(
       55: 932.327523036179832, //7 - A#
       85: 987.766602512248223, //U - B
     };
+    const asdrTimes = {
+      attack: 0.15,
+      decaySustain: 0.15,
+      release: 0.05,
+    };
 
     window.addEventListener("keydown", keyDown, false);
     window.addEventListener("keyup", keyUp, false);
@@ -50,7 +55,9 @@ document.addEventListener(
 
     function keyDown(event) {
       const key = (event.detail || event.which).toString();
-      playNote(key);
+      if (keyboardFrequencyMap[key] && !activeOscillators[key]) {
+        playNote(key);
+      }
     }
 
     function keyUp(event) {
@@ -58,14 +65,18 @@ document.addEventListener(
       if (keyboardFrequencyMap[key] && activeOscillators[key]) {
         // release
         activeGainNodes[key].gain.cancelScheduledValues(audioCtx.currentTime);
+
         activeGainNodes[key].gain.setTargetAtTime(
-          0,
+          0.0,
           audioCtx.currentTime,
-          0.05
+          asdrTimes.release
         );
-        activeOscillators[key].stop(audioCtx.currentTime + 0.05);
-        delete activeOscillators[key];
-        delete activeGainNodes[key];
+        setTimeout(() => {
+          console.log("gain val:", activeGainNodes[key].gain.value);
+          activeOscillators[key].stop(audioCtx.currentTime + asdrTimes.release);
+          delete activeOscillators[key];
+          delete activeGainNodes[key];
+        }, asdrTimes.release * 5000);
       }
     }
 
@@ -91,14 +102,14 @@ document.addEventListener(
           activeGainNodes[key].gain.setTargetAtTime(
             0.7 / gainFactor,
             audioCtx.currentTime,
-            0.15
+            asdrTimes.attack
           );
         });
         // decay and sustain
         gainNode.gain.setTargetAtTime(
           0.425 / gainFactor,
-          audioCtx.currentTime + 0.15,
-          0.15
+          audioCtx.currentTime + asdrTimes.attack,
+          asdrTimes.decaySustain
         );
       }
     }
