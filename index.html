@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>john key-ts</title>
+    <title>synth-dy lauper</title>
 
     <!-- Include Bootstrap CSS -->
     <link
@@ -14,14 +14,13 @@
     />
 
     <script src="sounds.js"></script>
-    <!-- <script src="poem.js"></script> -->
   </head>
   <body>
     <div class="container">
       <br />
       <br />
 
-      <h1>Lab 1: Poem Keyboard</h1>
+      <h1>Lab 2: Synth</h1>
       <br />
       <h5>COMS3430 Computational Sound</h5>
       <p>Ava Hajratwala</p>
@@ -30,11 +29,24 @@
         <span>Choose waveform: </span>
         <select id="waveform">
           <option value="sine" selected="selected">Sine</option>
-          <option value="sawtooth">Sawtooth (EVIL!)</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+          <option value="square">Square</option>
         </select>
         <br />
         <br />
         <br />
+        <label for="num-osc">
+          Oscilators <br />
+          <input
+            type="range"
+            min="1"
+            max="10"
+            step="1"
+            value="1"
+            id="num-oscs"
+          />
+        </label>
       </body>
     </div>
   </body>

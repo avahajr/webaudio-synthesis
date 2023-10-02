@@ -1,5 +1,7 @@
 let audioCtx;
 let waveform = "sine";
+let synth = "none";
+let num_oscs = parseInt(document.getElementById("num-oscs").value);
 
 document.addEventListener(
   "DOMContentLoaded",
@@ -41,6 +43,15 @@ document.addEventListener(
       release: 0.05,
     };
 
+    function updateOscCount() {
+      num_oscs = parseInt(document.getElementById("num-oscs").value);
+      console.log(num_oscs);
+    }
+
+    document.getElementById("num-oscs").addEventListener("change", function () {
+      updateOscCount();
+    });
+
     window.addEventListener("keydown", keyDown, false);
     window.addEventListener("keyup", keyUp, false);
 
@@ -64,8 +75,8 @@ document.addEventListener(
       const key = (event.detail || event.which).toString();
       if (keyboardFrequencyMap[key] && activeOscillators[key]) {
         // release
-        activeGainNodes[key].gain.cancelScheduledValues(audioCtx.currentTime);
 
+        activeGainNodes[key].gain.cancelScheduledValues(audioCtx.currentTime);
         activeGainNodes[key].gain.setTargetAtTime(
           0.0,
           audioCtx.currentTime,
@@ -73,7 +84,9 @@ document.addEventListener(
         );
         setTimeout(() => {
           console.log("gain val:", activeGainNodes[key].gain.value);
-          activeOscillators[key].stop(audioCtx.currentTime + asdrTimes.release);
+          activeOscillators[key].forEach((element) =>
+            element.stop(audioCtx.currentTime + asdrTimes.release)
+          );
           delete activeOscillators[key];
           delete activeGainNodes[key];
         }, asdrTimes.release * 5000);
@@ -81,19 +94,28 @@ document.addEventListener(
     }
 
     function playNote(key) {
+      let additive_osc_list = [];
       if (!activeOscillators[key]) {
-        const osc = audioCtx.createOscillator();
-        osc.type = waveform;
-        osc.frequency.setValueAtTime(
-          keyboardFrequencyMap[key],
-          audioCtx.currentTime
-        );
-
         var gainNode = audioCtx.createGain();
         gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        osc.connect(gainNode).connect(audioCtx.destination);
-        osc.start();
-        activeOscillators[key] = osc;
+        for (let i = 1; i < num_oscs + 1; i++) {
+          const additive_osc = audioCtx.createOscillator();
+          additive_osc.type = waveform;
+          if (i == 1) {
+            additive_osc.frequency.value = i * keyboardFrequencyMap[key];
+          } else {
+            // add randomness if it is a partial
+            additive_osc.frequency.value =
+              i * keyboardFrequencyMap[key] + Math.random() * 15;
+          }
+
+          additive_osc.connect(gainNode); // connect to the note's gain node
+          additive_osc_list[i - 1] = additive_osc;
+          additive_osc.start();
+        }
+
+        gainNode.connect(audioCtx.destination);
+        activeOscillators[key] = additive_osc_list;
         activeGainNodes[key] = gainNode;
         let gainFactor = Object.keys(activeGainNodes).length;
         // attack
