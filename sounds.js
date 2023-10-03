@@ -2,6 +2,7 @@ let audioCtx;
 let waveform = "sine";
 let synth = "none";
 let num_oscs = 1;
+var globalAnalyser;
 
 document.addEventListener(
   "DOMContentLoaded",
@@ -42,7 +43,10 @@ document.addEventListener(
     };
 
     function updateOscCount() {
-      num_oscs = parseInt(document.getElementById("num-oscs").value);
+      const osc_slider = document.getElementById("num-oscs").value;
+
+      num_oscs = parseInt(osc_slider);
+      document.getElementById("osc-label").textContent = num_oscs.toString();
       console.log(num_oscs);
     }
 
@@ -79,6 +83,45 @@ document.addEventListener(
       waveform = event.target.value;
     });
 
+    function draw() {
+      globalAnalyser.fftSize = 2048;
+      var bufferLength = globalAnalyser.frequencyBinCount;
+      var dataArray = new Uint8Array(bufferLength);
+      globalAnalyser.getByteTimeDomainData(dataArray);
+
+      var canvas = document.querySelector("#globalVisualizer");
+      var canvasCtx = canvas.getContext("2d");
+
+      requestAnimationFrame(draw);
+
+      globalAnalyser.getByteTimeDomainData(dataArray);
+
+      canvasCtx.fillStyle = "white";
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+      canvasCtx.lineWidth = 2;
+      canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+
+      canvasCtx.beginPath();
+
+      var sliceWidth = (canvas.width * 1.0) / bufferLength;
+      var x = 0;
+
+      for (var i = 0; i < bufferLength; i++) {
+        var v = dataArray[i] / 128.0;
+        var y = (v * canvas.height) / 2;
+        if (i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
+        }
+        x += sliceWidth;
+      }
+
+      canvasCtx.lineTo(canvas.width, canvas.height / 2);
+      canvasCtx.stroke();
+    }
+
     let activeOscillators = {};
     let activeGainNodes = {};
 
@@ -104,6 +147,9 @@ document.addEventListener(
           activeOscillators[key].forEach((element) =>
             element.stop(audioCtx.currentTime + asdrTimes.release)
           );
+          activeOscillators[key].forEach((oscNode) => {
+            delete oscNode;
+          });
           delete activeOscillators[key];
           delete activeGainNodes[key];
         }, asdrTimes.release * 5000);
@@ -112,13 +158,14 @@ document.addEventListener(
 
     function playNote(key) {
       let additive_osc_list = []; // data structure for storing oscilators that are connected to a single gain node
+
       if (!activeOscillators[key]) {
         var modulatorFrequency = audioCtx.createOscillator(); // to modulate either the gain or the freq, depending
         modulatorFrequency.frequency.value = 100; // TODO: interface later
 
         var gainNode = audioCtx.createGain(); // aka modulated?
         var depth = audioCtx.createGain();
-        depth.gain.value = 0.5;
+        depth.gain.value = 0.5 / num_oscs;
         gainNode.gain.value = 1.0 - depth.gain.value;
 
         gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
@@ -136,7 +183,7 @@ document.addEventListener(
               i * keyboardFrequencyMap[key] + Math.random() * 15;
           }
 
-          additive_osc.connect(gainNode); // connect to the note's gain node
+          additive_osc.connect(gainNode).connect(audioCtx.destination); // connect to the note's gain node
           additive_osc_list[i - 1] = additive_osc;
           additive_osc.start();
         }
@@ -144,15 +191,17 @@ document.addEventListener(
           modulatorFrequency.connect(depth).connect(gainNode.gain);
           modulatorFrequency.start();
         }
-        gainNode.connect(audioCtx.destination);
+        globalAnalyser = audioCtx.createAnalyser();
+        gainNode.connect(globalAnalyser);
+        draw();
         activeOscillators[key] = additive_osc_list;
         activeGainNodes[key] = gainNode;
-        let gainFactor = Object.keys(activeGainNodes).length;
+        let gainFactor = Object.keys(activeGainNodes).length * num_oscs;
         // attack
         // handle polyphony
         Object.keys(activeGainNodes).forEach(function (key) {
           activeGainNodes[key].gain.setTargetAtTime(
-            0.7 / gainFactor / num_oscs,
+            0.7 / gainFactor,
             audioCtx.currentTime,
             asdrTimes.attack
           );

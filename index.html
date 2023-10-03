@@ -19,55 +19,67 @@
     <div class="container">
       <br />
       <br />
+      <div class="row">
+        <div class="col">
+          <h1>Lab 2: Synth</h1>
+          <br />
+          <h5>COMS3430 Computational Sound</h5>
+          <p>Ava Hajratwala</p>
+        </div>
+        <div class="col">
+          <canvas
+            id="globalVisualizer"
+            width="150"
+            height="85"
+            style="border: 1px solid #000000"
+            >wave form visualizer</canvas
+          >
+        </div>
+      </div>
 
-      <h1>Lab 2: Synth</h1>
+      <span>Choose waveform: </span>
+      <select id="waveform">
+        <option value="sine" selected="selected">Sine</option>
+        <option value="sawtooth">Sawtooth</option>
+        <option value="triangle">Triangle</option>
+        <option value="square">Square</option>
+      </select>
       <br />
-      <h5>COMS3430 Computational Sound</h5>
-      <p>Ava Hajratwala</p>
+      <br />
+      <br />
+      <div class="row justify-content-center">
+        <div class="col">
+          <label for="num-oscs">
+            <input
+              type="range"
+              min="1"
+              max="10"
+              step="1"
+              defaultValue="1"
+              id="num-oscs"
+            />
 
-      <body>
-        <span>Choose waveform: </span>
-        <select id="waveform">
-          <option value="sine" selected="selected">Sine</option>
-          <option value="sawtooth">Sawtooth</option>
-          <option value="triangle">Triangle</option>
-          <option value="square">Square</option>
-        </select>
-        <br />
-        <br />
-        <br />
-        <div class="row justify-content-center">
-          <div class="col-sm">
-            <label for="num-oscs">
-              Oscilators <br />
-              <input
-                type="range"
-                min="1"
-                max="10"
-                step="1"
-                defaultValue="1"
-                id="num-oscs"
-              />
+            <br />
+            Number of partials: <span id="osc-label">1</span>
+          </label>
+        </div>
+        <div class="col">
+          <div class="form-check form-switch">
+            <label for="am">
+              <input type="checkbox" id="am" class="form-check-input" />
+              AM
             </label>
           </div>
-          <div class="col">
-            <div class="form-check form-switch">
-              <label for="am">
-                <input type="checkbox" id="am" class="form-check-input" />
-                AM
-              </label>
-            </div>
-          </div>
-          <div class="col-sm">
-            <div class="form-check form-switch">
-              <label for="fm">
-                <input type="checkbox" id="fm" class="form-check-input" />
-                FM
-              </label>
-            </div>
+        </div>
+        <div class="col">
+          <div class="form-check form-switch">
+            <label for="fm">
+              <input type="checkbox" id="fm" class="form-check-input" />
+              FM
+            </label>
           </div>
         </div>
-      </body>
+      </div>
     </div>
   </body>
 </html>
