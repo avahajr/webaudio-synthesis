@@ -36,7 +36,7 @@
         <br />
         <br />
         <br />
-        <div class="row">
+        <div class="row justify-content-center">
           <div class="col-sm">
             <label for="num-oscs">
               Oscilators <br />
@@ -50,17 +50,21 @@
               />
             </label>
           </div>
-          <div class="col-sm">
-            <label for="am">
-              AM<br />
-              <input type="checkbox" id="am" />
-            </label>
+          <div class="col">
+            <div class="form-check form-switch">
+              <label for="am">
+                <input type="checkbox" id="am" class="form-check-input" />
+                AM
+              </label>
+            </div>
           </div>
           <div class="col-sm">
-            <label for="fm">
-              FM<br />
-              <input type="checkbox" id="fm" />
-            </label>
+            <div class="form-check form-switch">
+              <label for="fm">
+                <input type="checkbox" id="fm" class="form-check-input" />
+                FM
+              </label>
+            </div>
           </div>
         </div>
       </body>
