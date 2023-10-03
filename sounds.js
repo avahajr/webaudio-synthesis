@@ -2,8 +2,6 @@ let audioCtx;
 let waveform = "sine";
 let synth = "none";
 let num_oscs = 1;
-let fm = false;
-let am = false;
 
 document.addEventListener(
   "DOMContentLoaded",
@@ -53,6 +51,26 @@ document.addEventListener(
 
     window.addEventListener("keydown", keyDown, false);
     window.addEventListener("keyup", keyUp, false);
+
+    let fm = document
+      .getElementById("fm")
+      .addEventListener("change", function () {
+        updateFM();
+      });
+    let am = document
+      .getElementById("am")
+      .addEventListener("change", function () {
+        updateAM();
+      });
+
+    function updateAM() {
+      am = document.getElementById("am").checked;
+      console.log("AM:", am);
+    }
+    function updateFM() {
+      fm = document.getElementById("fm").checked;
+      console.log("FM:", fm);
+    }
 
     // select waveform
     const waveformControl = document.getElementById("waveform");
@@ -130,7 +148,7 @@ document.addEventListener(
         activeGainNodes[key] = gainNode;
         let gainFactor = Object.keys(activeGainNodes).length;
         // attack
-        // reduce gain on all nodes for polyphony
+        // handle polyphony
         Object.keys(activeGainNodes).forEach(function (key) {
           activeGainNodes[key].gain.setTargetAtTime(
             0.7 / gainFactor / num_oscs,
