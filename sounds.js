@@ -1,15 +1,14 @@
 let audioCtx;
 let waveform = "sine";
 let synth = "none";
-let num_oscs = parseInt(document.getElementById("num-oscs").value);
+let num_oscs = 1;
+let fm = false;
+let am = false;
 
 document.addEventListener(
   "DOMContentLoaded",
   function (event) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const globalGain = audioCtx.createGain();
-    globalGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-    globalGain.connect(audioCtx.destination);
 
     const keyboardFrequencyMap = {
       90: 261.625565300598634, //Z - C
@@ -75,7 +74,6 @@ document.addEventListener(
       const key = (event.detail || event.which).toString();
       if (keyboardFrequencyMap[key] && activeOscillators[key]) {
         // release
-
         activeGainNodes[key].gain.cancelScheduledValues(audioCtx.currentTime);
         activeGainNodes[key].gain.setTargetAtTime(
           0.0,
@@ -94,13 +92,23 @@ document.addEventListener(
     }
 
     function playNote(key) {
-      let additive_osc_list = [];
+      let additive_osc_list = []; // data structure for storing oscilators that are connected to a single gain node
       if (!activeOscillators[key]) {
-        var gainNode = audioCtx.createGain();
+        var modulatorFrequency = audioCtx.createOscillator(); // to modulate either the gain or the freq, depending
+        modulatorFrequency.frequency.value = 100; // TODO: interface later
+
+        var gainNode = audioCtx.createGain(); // aka modulated?
+        var depth = audioCtx.createGain();
+        depth.gain.value = 0.5;
+        gainNode.gain.value = 1.0 - depth.gain.value;
+
         gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
         for (let i = 1; i < num_oscs + 1; i++) {
-          const additive_osc = audioCtx.createOscillator();
+          // additive synthesis
+          const additive_osc = audioCtx.createOscillator(); // aka carrier
           additive_osc.type = waveform;
+
           if (i == 1) {
             additive_osc.frequency.value = i * keyboardFrequencyMap[key];
           } else {
@@ -113,7 +121,10 @@ document.addEventListener(
           additive_osc_list[i - 1] = additive_osc;
           additive_osc.start();
         }
-
+        if (am) {
+          modulatorFrequency.connect(depth).connect(gainNode.gain);
+          modulatorFrequency.start();
+        }
         gainNode.connect(audioCtx.destination);
         activeOscillators[key] = additive_osc_list;
         activeGainNodes[key] = gainNode;
@@ -122,14 +133,14 @@ document.addEventListener(
         // reduce gain on all nodes for polyphony
         Object.keys(activeGainNodes).forEach(function (key) {
           activeGainNodes[key].gain.setTargetAtTime(
-            0.7 / gainFactor,
+            0.7 / gainFactor / num_oscs,
             audioCtx.currentTime,
             asdrTimes.attack
           );
         });
         // decay and sustain
         gainNode.gain.setTargetAtTime(
-          0.425 / gainFactor,
+          0.425 / gainFactor / num_oscs,
           audioCtx.currentTime + asdrTimes.attack,
           asdrTimes.decaySustain
         );
