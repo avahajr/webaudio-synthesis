@@ -15,6 +15,7 @@
 
     <link href="./main.css" rel="stylesheet" />
     <script src="sounds.js"></script>
+    <script src="poem.js"></script>
   </head>
   <body>
     <div class="container">
@@ -39,7 +40,7 @@
       <span>Choose waveform: </span>
       <select id="waveform">
         <option value="sine" selected="selected">Sine</option>
-        <option value="sawtooth">Sawtooth</option>
+        <option value="sawtooth">Sawtooth (EVIL!)</option>
         <option value="triangle">Triangle</option>
         <option value="square">Square</option>
       </select>
@@ -83,38 +84,82 @@
             </label>
           </div>
         </div>
+        <div class="col">
+          <div class="form-check form-switch">
+            <label for="lfo">
+              <input
+                type="checkbox"
+                id="lfo"
+                class="form-check-input"
+                value="false"
+              />
+              LFO
+            </label>
+          </div>
+        </div>
       </div>
-      <div class="row gy-10 justify-content-center">
-        <div class="col text-center">
-          <div id="hide" hidden>
+      <div class="row">
+        <div class="col"></div>
+        <div class="col">
+          <div id="hide-not-am" hidden>
             <input
               type="range"
-              id="modulation-freq"
+              id="am-modulation-freq"
               min="0"
               max="600"
               value="100"
               step="1"
             />
             <br />
-            <label>Modulation frequency: </label
-            ><span id="modulation_label"></span>
+            <label>Modulation frequency (AM): </label
+            ><span id="am-modulation-label"></span>
           </div>
         </div>
-        <div class="col"></div>
         <div class="col">
-          <div class="notFMHide" hidden>
+          <div id="hide-not-fm" hidden>
             <input
               type="range"
-              id="modulation_index"
+              id="fm-modulation-freq"
               min="0"
-              max="300"
+              max="600"
               value="100"
               step="1"
-            /><br />
-            <label>Modulation index: </label
-            ><span id="modulation_index_label"></span>
+            />
+            <br />
+            <label>Modulation frequency (FM): </label
+            ><span id="fm-modulation-label"></span>
           </div>
         </div>
+        <div class="col">
+          <div id="hide-not-lfo" hidden>
+            <input
+              type="range"
+              id="lfo-modulation-freq"
+              min="0"
+              max="10"
+              value="5"
+              step=".25"
+            />
+            <label>Modulation frequency (LFO): </label
+            ><span id="lfo-modulation-label"></span>
+            <br />
+            <br />
+            <br />
+            <input
+              type="range"
+              id="lfo-gain"
+              min="0"
+              max="20"
+              value="5"
+              step="0.5"
+            />
+            <br />
+            <label>Gain (LFO): </label><span id="lfo-gain-label"></span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <p id="wordDisplay"></p>
       </div>
     </div>
   </body>

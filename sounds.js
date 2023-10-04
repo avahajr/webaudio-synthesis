@@ -1,10 +1,16 @@
+// import * as poem from poem.js;
 let audioCtx;
 let waveform = "sine";
-let synth = "none";
 let num_oscs = 1;
 var globalAnalyser;
-var modulation_freq = 100;
+var am_modulation_freq = 100;
+var fm_modulation_freq = 100;
+var lfo_modulation_freq = 5;
 var modulation_index = 100;
+
+var lfo; // the actual node
+var lfoGain; // gain node
+var lfoGainValue = 10;
 
 document.addEventListener(
   "DOMContentLoaded",
@@ -12,6 +18,8 @@ document.addEventListener(
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     document.getElementById("am").checked = false;
     document.getElementById("fm").checked = false;
+    document.getElementById("lfo").checked = false;
+
     document.getElementById("num-oscs").value = 1;
     const keyboardFrequencyMap = {
       90: 261.625565300598634, //Z - C
@@ -46,12 +54,31 @@ document.addEventListener(
       release: 0.05,
     };
 
-    function updateModFreq() {
-      modulation_freq = parseInt(
-        document.getElementById("modulation-freq").value
+    function updateAMModFreq() {
+      am_modulation_freq = parseInt(
+        document.getElementById("am-modulation-freq").value
       );
-      document.getElementById("modulation_label").textContent =
-        " " + modulation_freq.toString();
+      document.getElementById("am-modulation-label").textContent =
+        " " + am_modulation_freq.toString();
+    }
+    function updateFMModFreq() {
+      fm_modulation_freq = parseInt(
+        document.getElementById("fm-modulation-freq").value
+      );
+      document.getElementById("fm-modulation-label").textContent =
+        " " + fm_modulation_freq.toString();
+    }
+    function updateLFOModFreq() {
+      lfo_modulation_freq = parseFloat(
+        document.getElementById("lfo-modulation-freq").value
+      );
+      document.getElementById("lfo-modulation-label").textContent =
+        " " + lfo_modulation_freq.toString();
+    }
+    function updateLFOGain() {
+      lfoGainValue = parseFloat(document.getElementById("lfo-gain").value);
+      document.getElementById("lfo-gain-label").textContent =
+        " " + lfoGainValue.toString();
     }
     function updateOscCount() {
       const osc_slider = document.getElementById("num-oscs").value;
@@ -61,15 +88,34 @@ document.addEventListener(
       console.log(num_oscs);
     }
 
-    document.getElementById("modulation_label").textContent =
-      " " + modulation_freq.toString();
+    document.getElementById("am-modulation-label").textContent =
+      " " + am_modulation_freq.toString();
+
+    document.getElementById("fm-modulation-label").textContent =
+      " " + fm_modulation_freq.toString();
+
+    document.getElementById("lfo-modulation-label").textContent =
+      " " + lfo_modulation_freq.toString();
 
     document
-      .getElementById("modulation-freq")
+      .getElementById("am-modulation-freq")
       .addEventListener("change", function () {
-        updateModFreq();
+        updateAMModFreq();
       });
 
+    document
+      .getElementById("fm-modulation-freq")
+      .addEventListener("change", function () {
+        updateFMModFreq();
+      });
+    document
+      .getElementById("lfo-modulation-freq")
+      .addEventListener("change", function () {
+        updateLFOModFreq();
+      });
+    document.getElementById("lfo-gain").addEventListener("change", function () {
+      updateLFOGain();
+    });
     document.getElementById("num-oscs").addEventListener("change", function () {
       updateOscCount();
     });
@@ -87,26 +133,40 @@ document.addEventListener(
       .addEventListener("change", function () {
         updateAM();
       });
+    let isLFO = document
+      .getElementById("lfo")
+      .addEventListener("change", function () {
+        updateLFO();
+      });
 
     function updateAM() {
       am = document.getElementById("am").checked;
-      if (!am && !fm) {
+      if (!am) {
         // console.log("disabling?");
-        document.getElementById("hide").setAttribute("hidden", true);
+        document.getElementById("hide-not-am").setAttribute("hidden", true);
       } else {
-        document.getElementById("hide").removeAttribute("hidden");
+        document.getElementById("hide-not-am").removeAttribute("hidden");
       }
       // console.log("AM:", am);
     }
     function updateFM() {
       fm = document.getElementById("fm").checked;
-      if (!fm && !am) {
+      if (!fm) {
         // console.log("disabling?");
-        document.getElementById("hide").setAttribute("hidden", true);
+        document.getElementById("hide-not-fm").setAttribute("hidden", true);
       } else {
-        document.getElementById("hide").removeAttribute("hidden");
+        document.getElementById("hide-not-fm").removeAttribute("hidden");
       }
       // console.log("FM:", fm);
+    }
+    function updateLFO() {
+      isLFO = document.getElementById("lfo").checked;
+      if (!isLFO) {
+        // console.log("disabling?");
+        document.getElementById("hide-not-lfo").setAttribute("hidden", true);
+      } else {
+        document.getElementById("hide-not-lfo").removeAttribute("hidden");
+      }
     }
 
     // select waveform
@@ -161,6 +221,7 @@ document.addEventListener(
       const key = (event.detail || event.which).toString();
       if (keyboardFrequencyMap[key] && !activeOscillators[key]) {
         playNote(key);
+        // poem.logNextWord()
       }
     }
 
@@ -200,18 +261,26 @@ document.addEventListener(
         gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
         for (let i = 1; i < num_oscs + 1; i++) {
-          var modulatorFrequency = audioCtx.createOscillator(); // to modulate either the gain or the freq, depending
-          modulatorFrequency.frequency.value = modulation_freq;
           // additive synthesis
           const additive_osc = audioCtx.createOscillator(); // aka carrier
           additive_osc.type = waveform;
-
+          if (isLFO) {
+            lfo = audioCtx.createOscillator();
+            lfo.frequency.value = lfo_modulation_freq;
+            lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = lfoGainValue;
+            lfo.connect(lfoGain).connect(additive_osc.frequency);
+            lfo.start();
+          }
           if (fm) {
             var modulationIndex = audioCtx.createGain();
+            var modulatorFrequency = audioCtx.createOscillator();
+            modulatorFrequency.frequency.value = fm_modulation_freq;
             modulationIndex.gain.value = modulation_index;
             modulatorFrequency.connect(modulationIndex);
             modulationIndex.connect(additive_osc.frequency);
-            // modulatorFrequency.start();
+
+            modulatorFrequency.start();
           }
 
           if (i == 1) {
@@ -228,9 +297,9 @@ document.addEventListener(
         }
 
         if (am) {
+          var modulatorFrequency = audioCtx.createOscillator(); // to modulate either the gain or the freq, depending
+          modulatorFrequency.frequency.value = am_modulation_freq;
           modulatorFrequency.connect(depth).connect(gainNode.gain);
-        }
-        if (am || fm) {
           modulatorFrequency.start();
         }
 
@@ -244,7 +313,7 @@ document.addEventListener(
         // handle polyphony
         Object.keys(activeGainNodes).forEach(function (key) {
           activeGainNodes[key].gain.setTargetAtTime(
-            0.7 / gainFactor,
+            0.6 / gainFactor,
             audioCtx.currentTime,
             asdrTimes.attack
           );
