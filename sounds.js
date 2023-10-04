@@ -3,12 +3,16 @@ let waveform = "sine";
 let synth = "none";
 let num_oscs = 1;
 var globalAnalyser;
+var modulation_freq = 100;
+var modulation_index = 100;
 
 document.addEventListener(
   "DOMContentLoaded",
   function (event) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
+    document.getElementById("am").checked = false;
+    document.getElementById("fm").checked = false;
+    document.getElementById("num-oscs").value = 1;
     const keyboardFrequencyMap = {
       90: 261.625565300598634, //Z - C
       83: 277.182630976872096, //S - C#
@@ -42,6 +46,13 @@ document.addEventListener(
       release: 0.05,
     };
 
+    function updateModFreq() {
+      modulation_freq = parseInt(
+        document.getElementById("modulation-freq").value
+      );
+      document.getElementById("modulation_label").textContent =
+        " " + modulation_freq.toString();
+    }
     function updateOscCount() {
       const osc_slider = document.getElementById("num-oscs").value;
 
@@ -49,6 +60,15 @@ document.addEventListener(
       document.getElementById("osc-label").textContent = num_oscs.toString();
       console.log(num_oscs);
     }
+
+    document.getElementById("modulation_label").textContent =
+      " " + modulation_freq.toString();
+
+    document
+      .getElementById("modulation-freq")
+      .addEventListener("change", function () {
+        updateModFreq();
+      });
 
     document.getElementById("num-oscs").addEventListener("change", function () {
       updateOscCount();
@@ -70,11 +90,23 @@ document.addEventListener(
 
     function updateAM() {
       am = document.getElementById("am").checked;
-      console.log("AM:", am);
+      if (!am && !fm) {
+        // console.log("disabling?");
+        document.getElementById("hide").setAttribute("hidden", true);
+      } else {
+        document.getElementById("hide").removeAttribute("hidden");
+      }
+      // console.log("AM:", am);
     }
     function updateFM() {
       fm = document.getElementById("fm").checked;
-      console.log("FM:", fm);
+      if (!fm && !am) {
+        // console.log("disabling?");
+        document.getElementById("hide").setAttribute("hidden", true);
+      } else {
+        document.getElementById("hide").removeAttribute("hidden");
+      }
+      // console.log("FM:", fm);
     }
 
     // select waveform
@@ -160,9 +192,6 @@ document.addEventListener(
       let additive_osc_list = []; // data structure for storing oscilators that are connected to a single gain node
 
       if (!activeOscillators[key]) {
-        var modulatorFrequency = audioCtx.createOscillator(); // to modulate either the gain or the freq, depending
-        modulatorFrequency.frequency.value = 100; // TODO: interface later
-
         var gainNode = audioCtx.createGain(); // aka modulated?
         var depth = audioCtx.createGain();
         depth.gain.value = 0.5 / num_oscs;
@@ -171,9 +200,19 @@ document.addEventListener(
         gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
         for (let i = 1; i < num_oscs + 1; i++) {
+          var modulatorFrequency = audioCtx.createOscillator(); // to modulate either the gain or the freq, depending
+          modulatorFrequency.frequency.value = modulation_freq;
           // additive synthesis
           const additive_osc = audioCtx.createOscillator(); // aka carrier
           additive_osc.type = waveform;
+
+          if (fm) {
+            var modulationIndex = audioCtx.createGain();
+            modulationIndex.gain.value = modulation_index;
+            modulatorFrequency.connect(modulationIndex);
+            modulationIndex.connect(additive_osc.frequency);
+            // modulatorFrequency.start();
+          }
 
           if (i == 1) {
             additive_osc.frequency.value = i * keyboardFrequencyMap[key];
@@ -187,10 +226,14 @@ document.addEventListener(
           additive_osc_list[i - 1] = additive_osc;
           additive_osc.start();
         }
+
         if (am) {
           modulatorFrequency.connect(depth).connect(gainNode.gain);
+        }
+        if (am || fm) {
           modulatorFrequency.start();
         }
+
         globalAnalyser = audioCtx.createAnalyser();
         gainNode.connect(globalAnalyser);
         draw();
@@ -208,7 +251,7 @@ document.addEventListener(
         });
         // decay and sustain
         gainNode.gain.setTargetAtTime(
-          0.425 / gainFactor / num_oscs,
+          0.425 / gainFactor,
           audioCtx.currentTime + asdrTimes.attack,
           asdrTimes.decaySustain
         );

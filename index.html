@@ -13,25 +13,24 @@
       crossorigin="anonymous"
     />
 
+    <link href="./main.css" rel="stylesheet" />
     <script src="sounds.js"></script>
   </head>
   <body>
     <div class="container">
-      <br />
-      <br />
-      <div class="row">
+      <div class="row" style="margin-top: 3rem">
         <div class="col">
           <h1>Lab 2: Synth</h1>
           <br />
           <h5>COMS3430 Computational Sound</h5>
           <p>Ava Hajratwala</p>
         </div>
-        <div class="col">
+        <div class="col text-center">
           <canvas
             id="globalVisualizer"
-            width="150"
-            height="85"
-            style="border: 1px solid #000000"
+            width="300"
+            height="170"
+            style="border: 1px solid #00000020"
             >wave form visualizer</canvas
           >
         </div>
@@ -48,14 +47,14 @@
       <br />
       <br />
       <div class="row justify-content-center">
-        <div class="col">
+        <div class="col text-center">
           <label for="num-oscs">
             <input
               type="range"
               min="1"
               max="10"
               step="1"
-              defaultValue="1"
+              value="1"
               id="num-oscs"
             />
 
@@ -74,9 +73,46 @@
         <div class="col">
           <div class="form-check form-switch">
             <label for="fm">
-              <input type="checkbox" id="fm" class="form-check-input" />
+              <input
+                type="checkbox"
+                id="fm"
+                class="form-check-input"
+                value="false"
+              />
               FM
             </label>
+          </div>
+        </div>
+      </div>
+      <div class="row gy-10 justify-content-center">
+        <div class="col text-center">
+          <div id="hide" hidden>
+            <input
+              type="range"
+              id="modulation-freq"
+              min="0"
+              max="600"
+              value="100"
+              step="1"
+            />
+            <br />
+            <label>Modulation frequency: </label
+            ><span id="modulation_label"></span>
+          </div>
+        </div>
+        <div class="col"></div>
+        <div class="col">
+          <div class="notFMHide" hidden>
+            <input
+              type="range"
+              id="modulation_index"
+              min="0"
+              max="300"
+              value="100"
+              step="1"
+            /><br />
+            <label>Modulation index: </label
+            ><span id="modulation_index_label"></span>
           </div>
         </div>
       </div>
