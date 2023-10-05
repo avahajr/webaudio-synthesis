@@ -6,7 +6,7 @@ var globalAnalyser;
 var am_modulation_freq = 100;
 var fm_modulation_freq = 100;
 var lfo_modulation_freq = 5;
-var modulation_index = 100;
+var modulation_index = 50;
 
 var lfo; // the actual node
 var lfoGain; // gain node
@@ -65,8 +65,16 @@ document.addEventListener(
       fm_modulation_freq = parseInt(
         document.getElementById("fm-modulation-freq").value
       );
+
       document.getElementById("fm-modulation-label").textContent =
         " " + fm_modulation_freq.toString();
+    }
+    function updateFMModIdx() {
+      modulation_index = parseInt(
+        document.getElementById("fm-modulation-idx").value
+      );
+      document.getElementById("fm-modulation-idx-label").textContent =
+        " " + modulation_index.toString();
     }
     function updateLFOModFreq() {
       lfo_modulation_freq = parseFloat(
@@ -97,6 +105,9 @@ document.addEventListener(
     document.getElementById("lfo-modulation-label").textContent =
       " " + lfo_modulation_freq.toString();
 
+    document.getElementById("fm-modulation-idx-label").textContent =
+      " " + modulation_index.toString();
+
     document
       .getElementById("am-modulation-freq")
       .addEventListener("change", function () {
@@ -107,6 +118,11 @@ document.addEventListener(
       .getElementById("fm-modulation-freq")
       .addEventListener("change", function () {
         updateFMModFreq();
+      });
+    document
+      .getElementById("fm-modulation-idx")
+      .addEventListener("change", function () {
+        updateFMModIdx();
       });
     document
       .getElementById("lfo-modulation-freq")
